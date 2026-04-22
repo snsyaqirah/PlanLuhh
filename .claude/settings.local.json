@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ':*)",
+      "Bash(python -c \"import secrets; print\\('SECRET_KEY=' + secrets.token_hex\\(32\\)\\)\")",
+      "Bash(python -c \"import secrets, base64; key = base64.urlsafe_b64encode\\(secrets.token_bytes\\(32\\)\\); print\\('ENCRYPTION_KEY=' + key.decode\\(\\)\\)\")",
+      "Bash(python -c \"import app; print\\(app.__file__\\)\")",
+      "Bash(python -c \"from app.main import app; print\\(app.title\\)\")",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 22008 /F)"
+    ]
+  }
+}
