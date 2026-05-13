@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Date, Numeric, Text, Enum as SAEnum
+from sqlalchemy import Column, String, Date, Time, Numeric, Text, Enum as SAEnum
 from sqlalchemy.orm import relationship
 import enum
 from app.core.database import Base
@@ -36,6 +36,23 @@ class Wedding(Base, UUIDMixin, TimestampMixin):
     groom_mother_name = Column(String(255), nullable=True)
     bride_father_name = Column(String(255), nullable=True)
     bride_mother_name = Column(String(255), nullable=True)
+
+    # Akad Nikah
+    tarikh_nikah = Column(Date, nullable=True)
+    waktu_nikah = Column(Time, nullable=True)
+    venue_nikah = Column(String(500), nullable=True)
+    tema_warna_nikah = Column(String(100), nullable=True)
+
+    # Majlis Sanding Pihak Perempuan
+    tarikh_sanding_perempuan = Column(Date, nullable=True)
+    waktu_sanding_perempuan = Column(Time, nullable=True)
+    venue_sanding_perempuan = Column(String(500), nullable=True)
+
+    # Majlis Sanding Pihak Lelaki
+    tarikh_sanding_lelaki = Column(Date, nullable=True)
+    waktu_sanding_lelaki = Column(Time, nullable=True)
+    venue_sanding_lelaki = Column(String(500), nullable=True)
+    tema_warna_sanding = Column(String(100), nullable=True)
 
     # Relationships
     collaborators = relationship("WeddingCollaborator", back_populates="wedding", cascade="all, delete-orphan")

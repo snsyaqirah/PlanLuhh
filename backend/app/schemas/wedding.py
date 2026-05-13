@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from uuid import UUID
-from datetime import datetime, date
+from datetime import datetime, date, time
 from decimal import Decimal
 from app.models.wedding import WeddingThemeEnum
 
@@ -23,6 +23,20 @@ class WeddingCreate(BaseModel):
     groom_mother_name: Optional[str] = None
     bride_father_name: Optional[str] = None
     bride_mother_name: Optional[str] = None
+    # Akad Nikah
+    tarikh_nikah: Optional[date] = None
+    waktu_nikah: Optional[time] = None
+    venue_nikah: Optional[str] = None
+    tema_warna_nikah: Optional[str] = None
+    # Sanding Pihak Perempuan
+    tarikh_sanding_perempuan: Optional[date] = None
+    waktu_sanding_perempuan: Optional[time] = None
+    venue_sanding_perempuan: Optional[str] = None
+    # Sanding Pihak Lelaki
+    tarikh_sanding_lelaki: Optional[date] = None
+    waktu_sanding_lelaki: Optional[time] = None
+    venue_sanding_lelaki: Optional[str] = None
+    tema_warna_sanding: Optional[str] = None
 
 
 class WeddingUpdate(BaseModel):
@@ -42,6 +56,20 @@ class WeddingUpdate(BaseModel):
     groom_mother_name: Optional[str] = None
     bride_father_name: Optional[str] = None
     bride_mother_name: Optional[str] = None
+    # Akad Nikah
+    tarikh_nikah: Optional[date] = None
+    waktu_nikah: Optional[time] = None
+    venue_nikah: Optional[str] = None
+    tema_warna_nikah: Optional[str] = None
+    # Sanding Pihak Perempuan
+    tarikh_sanding_perempuan: Optional[date] = None
+    waktu_sanding_perempuan: Optional[time] = None
+    venue_sanding_perempuan: Optional[str] = None
+    # Sanding Pihak Lelaki
+    tarikh_sanding_lelaki: Optional[date] = None
+    waktu_sanding_lelaki: Optional[time] = None
+    venue_sanding_lelaki: Optional[str] = None
+    tema_warna_sanding: Optional[str] = None
 
 
 class WeddingOut(BaseModel):
@@ -63,6 +91,20 @@ class WeddingOut(BaseModel):
     groom_mother_name: Optional[str]
     bride_father_name: Optional[str]
     bride_mother_name: Optional[str]
+    # Akad Nikah
+    tarikh_nikah: Optional[date]
+    waktu_nikah: Optional[time]
+    venue_nikah: Optional[str]
+    tema_warna_nikah: Optional[str]
+    # Sanding Pihak Perempuan
+    tarikh_sanding_perempuan: Optional[date]
+    waktu_sanding_perempuan: Optional[time]
+    venue_sanding_perempuan: Optional[str]
+    # Sanding Pihak Lelaki
+    tarikh_sanding_lelaki: Optional[date]
+    waktu_sanding_lelaki: Optional[time]
+    venue_sanding_lelaki: Optional[str]
+    tema_warna_sanding: Optional[str]
     created_at: datetime
     updated_at: datetime
 

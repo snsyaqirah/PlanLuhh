@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Users, ShoppingBag, Wallet, CheckSquare,
   Mail, Image, Calendar, Plane, UtensilsCrossed, Grid3X3,
-  LogOut, ChevronLeft, ChevronRight, Heart,
+  LogOut, ChevronLeft, ChevronRight, Heart, UserCircle,
   FolderOpen, ListOrdered, Gift, MessageSquareText, Sparkles,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -92,10 +92,22 @@ export default function DashboardLayout() {
         </nav>
 
         {/* User + logout */}
-        <div className="border-t border-gray-100 p-3">
-          {!collapsed && (
-            <p className="text-xs text-gray-500 mb-2 px-1 truncate">{user?.email}</p>
-          )}
+        <div className="border-t border-gray-100 p-3 space-y-1">
+          <NavLink
+            to="/dashboard/profile"
+            className={({ isActive }) =>
+              `flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm transition-colors ${
+                isActive
+                  ? 'bg-primary-50 text-primary-700 font-medium'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`
+            }
+          >
+            <UserCircle size={16} className="flex-shrink-0" />
+            {!collapsed && (
+              <span className="truncate">{user?.full_name || user?.email}</span>
+            )}
+          </NavLink>
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"

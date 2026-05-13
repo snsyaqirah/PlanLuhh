@@ -132,6 +132,20 @@ export default function MissionControlPage() {
         wedding_date: wedding.wedding_date ?? '',
         venue_name: wedding.venue_name ?? '',
         budget_total: wedding.budget_total ?? '',
+        // Akad Nikah
+        tarikh_nikah: wedding.tarikh_nikah ?? '',
+        waktu_nikah: wedding.waktu_nikah ?? '',
+        venue_nikah: wedding.venue_nikah ?? '',
+        tema_warna_nikah: wedding.tema_warna_nikah ?? '',
+        // Sanding Perempuan
+        tarikh_sanding_perempuan: wedding.tarikh_sanding_perempuan ?? '',
+        waktu_sanding_perempuan: wedding.waktu_sanding_perempuan ?? '',
+        venue_sanding_perempuan: wedding.venue_sanding_perempuan ?? '',
+        // Sanding Lelaki
+        tarikh_sanding_lelaki: wedding.tarikh_sanding_lelaki ?? '',
+        waktu_sanding_lelaki: wedding.waktu_sanding_lelaki ?? '',
+        venue_sanding_lelaki: wedding.venue_sanding_lelaki ?? '',
+        tema_warna_sanding: wedding.tema_warna_sanding ?? '',
       })
     }
   }, [wedding, reset])
@@ -161,12 +175,23 @@ export default function MissionControlPage() {
   const isSaving = saveMutation.isLoading || createMutation.isLoading
 
   const onSave = (data) => {
-    const payload = { ...data }
-    if (payload.budget_total !== '') payload.budget_total = parseFloat(payload.budget_total)
-    else delete payload.budget_total
+    const payload = {}
+    for (const [k, v] of Object.entries(data)) {
+      if (v === '' || v === null || v === undefined) {
+        payload[k] = null
+      } else if (k === 'budget_total') {
+        payload[k] = parseFloat(v)
+      } else {
+        payload[k] = v
+      }
+    }
     if (weddingId) {
       saveMutation.mutate(payload)
     } else {
+      if (!payload.groom_name || !payload.bride_name) {
+        toast.error('Nama pengantin lelaki & perempuan diperlukan')
+        return
+      }
       createMutation.mutate(payload)
     }
   }
@@ -331,14 +356,70 @@ export default function MissionControlPage() {
           </div>
 
           {/* Event Details */}
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Event Details</p>
+          <div className="space-y-5">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Event Details</p>
+
+            {/* Akad Nikah */}
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4 space-y-3">
+              <p className="text-xs font-semibold text-primary-600 uppercase tracking-wide">Akad Nikah</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <Field label="Tarikh Nikah">
+                  <input {...register('tarikh_nikah')} type="date" className={inputCls} />
+                </Field>
+                <Field label="Waktu Nikah">
+                  <input {...register('waktu_nikah')} type="time" className={inputCls} />
+                </Field>
+                <Field label="Venue Akad Nikah">
+                  <input {...register('venue_nikah')} className={inputCls} placeholder="Masjid / Surau" />
+                </Field>
+                <Field label="Tema / Warna">
+                  <input {...register('tema_warna_nikah')} className={inputCls} placeholder="Sage Green, #A8C5A0" />
+                </Field>
+              </div>
+            </div>
+
+            {/* Sanding Pihak Perempuan */}
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4 space-y-3">
+              <p className="text-xs font-semibold text-blush-500 uppercase tracking-wide">Majlis Sanding — Pihak Perempuan</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Field label="Tarikh">
+                  <input {...register('tarikh_sanding_perempuan')} type="date" className={inputCls} />
+                </Field>
+                <Field label="Waktu">
+                  <input {...register('waktu_sanding_perempuan')} type="time" className={inputCls} />
+                </Field>
+                <Field label="Venue">
+                  <input {...register('venue_sanding_perempuan')} className={inputCls} placeholder="Dewan / Rumah" />
+                </Field>
+              </div>
+            </div>
+
+            {/* Sanding Pihak Lelaki */}
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4 space-y-3">
+              <p className="text-xs font-semibold text-violet-500 uppercase tracking-wide">Majlis Sanding — Pihak Lelaki</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <Field label="Tarikh">
+                  <input {...register('tarikh_sanding_lelaki')} type="date" className={inputCls} />
+                </Field>
+                <Field label="Waktu">
+                  <input {...register('waktu_sanding_lelaki')} type="time" className={inputCls} />
+                </Field>
+                <Field label="Venue">
+                  <input {...register('venue_sanding_lelaki')} className={inputCls} placeholder="Dewan / Rumah" />
+                </Field>
+                <Field label="Tema / Warna">
+                  <input {...register('tema_warna_sanding')} className={inputCls} placeholder="Dusty Blue, #6B9EBF" />
+                </Field>
+              </div>
+            </div>
+
+            {/* Main date + Budget */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Field label="Tarikh Majlis">
+              <Field label="Tarikh Utama (untuk Countdown)">
                 <input {...register('wedding_date')} type="date" className={inputCls} />
               </Field>
-              <Field label="Venue">
-                <input {...register('venue_name')} className={inputCls} placeholder="Dewan Seri Kenangan" />
+              <Field label="Venue Utama">
+                <input {...register('venue_name')} className={inputCls} placeholder="Nama Dewan / Lokasi" />
               </Field>
               <Field label={`Budget Ceiling (${currency})`}>
                 <input {...register('budget_total')} type="number" step="0.01" min="0" className={inputCls} placeholder="50000" />

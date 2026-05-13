@@ -9,7 +9,10 @@
       "Bash(netstat -ano)",
       "Bash(taskkill /PID 22008 /F)",
       "Bash(docker compose *)",
-      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); print\\(data[0]['text']\\)\")"
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); print\\(data[0]['text']\\)\")",
+      "Bash(xargs ls -1)",
+      "Bash(grep -E \"\\\\.jsx$\")",
+      "Bash(python3 -c ' *)"
     ]
   }
 }

@@ -5,8 +5,9 @@ import os, aiofiles
 from app.core.database import get_db
 from app.core.deps import get_verified_user
 from app.core.config import settings
+from app.core.security import verify_password, hash_password
 from app.models.user import User
-from app.schemas.user import UserOut, UserUpdate
+from app.schemas.user import UserOut, UserUpdate, ChangePasswordRequest
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -27,6 +28,19 @@ def update_me(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+@router.post("/me/change-password")
+def change_password(
+    payload: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_user),
+):
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    current_user.password_hash = hash_password(payload.new_password)
+    db.commit()
+    return {"message": "Password updated successfully"}
 
 
 @router.post("/me/avatar", response_model=UserOut)
