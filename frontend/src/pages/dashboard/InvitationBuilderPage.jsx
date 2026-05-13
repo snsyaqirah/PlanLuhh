@@ -5,7 +5,7 @@ import {
   Mail, Globe, Eye, Share2, CheckCircle2, Circle,
   Plus, X, Trash2, Edit2, Heart, Image, Phone,
   MessageSquare, QrCode, Gift, Music, Palette,
-  Toggle, ExternalLink, Copy, Check,
+  ExternalLink, Copy, Check,
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
