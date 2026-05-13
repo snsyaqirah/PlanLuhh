@@ -64,8 +64,8 @@ Dashboard
 | Budget | ✅ Done |
 | Profile Page | ✅ Done |
 | Moodboard | 🚧 Stub |
-| Vendors | 🚧 Stub |
-| Document Hub | 🚧 Stub |
+| Vendors | ✅ Done |
+| Document Hub | ✅ Done |
 | Schedule | 🚧 Stub |
 | Rundown | 🚧 Stub |
 | Checklist / Tasks | 🚧 Stub |
