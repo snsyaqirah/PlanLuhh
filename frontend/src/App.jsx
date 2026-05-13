@@ -12,7 +12,6 @@ import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
 // Dashboard pages
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import MissionControlPage from '@/pages/dashboard/MissionControlPage'
-import WeddingSettingsPage from '@/pages/dashboard/WeddingSettingsPage'
 import BudgetPage from '@/pages/dashboard/BudgetPage'
 import MoodboardPage from '@/pages/dashboard/MoodboardPage'
 import VendorsPage from '@/pages/dashboard/VendorsPage'
@@ -50,7 +49,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<MissionControlPage />} />
-            <Route path="settings" element={<WeddingSettingsPage />} />
+            <Route path="settings" element={<Navigate to="/dashboard" replace />} />
             {/* Foundation */}
             <Route path="budget" element={<BudgetPage />} />
             <Route path="moodboard" element={<MoodboardPage />} />

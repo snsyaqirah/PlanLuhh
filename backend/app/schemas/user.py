@@ -13,6 +13,7 @@ class UserOut(BaseModel):
     account_status: UserStatusEnum
     is_verified: bool
     profile_pic: Optional[str]
+    preferred_currency: str
     created_at: datetime
 
     model_config = {"from_attributes": True}

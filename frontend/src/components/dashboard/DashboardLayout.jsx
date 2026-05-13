@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Users, ShoppingBag, Wallet, CheckSquare,
   Mail, Image, Calendar, Plane, UtensilsCrossed, Grid3X3,
-  LogOut, ChevronLeft, ChevronRight, Heart, Settings,
+  LogOut, ChevronLeft, ChevronRight, Heart,
   FolderOpen, ListOrdered, Gift, MessageSquareText, Sparkles,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -11,8 +11,7 @@ import { useAuth } from '@/context/AuthContext'
 import toast from 'react-hot-toast'
 
 const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Mission Control', end: true },
-  { to: '/dashboard/settings', icon: Settings, label: 'Wedding Settings' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { divider: 'Foundation' },
   { to: '/dashboard/budget', icon: Wallet, label: 'Budget' },
   { to: '/dashboard/moodboard', icon: Image, label: 'Moodboard' },

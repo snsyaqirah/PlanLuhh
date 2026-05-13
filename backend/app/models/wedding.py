@@ -32,6 +32,10 @@ class Wedding(Base, UUIDMixin, TimestampMixin):
     budget_total = Column(Numeric(12, 2), default=0, nullable=False)
     cover_photo = Column(String(500), nullable=True)
     notes = Column(Text, nullable=True)
+    groom_father_name = Column(String(255), nullable=True)
+    groom_mother_name = Column(String(255), nullable=True)
+    bride_father_name = Column(String(255), nullable=True)
+    bride_mother_name = Column(String(255), nullable=True)
 
     # Relationships
     collaborators = relationship("WeddingCollaborator", back_populates="wedding", cascade="all, delete-orphan")

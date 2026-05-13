@@ -3,11 +3,24 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
 from app.core.deps import get_verified_user
+from app.core.security import decrypt_data
 from app.models.user import User
 from app.models.wedding import Wedding
 from app.models.collaborator import WeddingCollaborator, CollaboratorRoleEnum
+from app.models.guest import Guest, RSVPStatusEnum
+from app.models.vendor import Vendor, VendorStatusEnum
+from app.models.task import Task
+from app.models.budget import BudgetItem
 from app.schemas.wedding import WeddingCreate, WeddingUpdate, WeddingOut
 from app.utils.audit import log_action
+
+CONFIRMED_VENDOR_STATUSES = {
+    VendorStatusEnum.BOOKED,
+    VendorStatusEnum.DEPOSIT_PAID,
+    VendorStatusEnum.FULLY_PAID,
+    VendorStatusEnum.COMPLETED,
+}
+TOTAL_VENDOR_CATEGORIES = 13
 
 router = APIRouter(prefix="/weddings", tags=["weddings"])
 
@@ -93,6 +106,51 @@ def delete_wedding(
     wedding.status = 0  # soft delete
     log_action(db, "DELETE", user_id=current_user.id, wedding_id=wedding.id, entity_type="wedding", entity_id=wedding.id)
     db.commit()
+
+
+@router.get("/{wedding_id}/stats")
+def get_dashboard_stats(
+    wedding_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+
+    guests = db.query(Guest).filter(Guest.wedding_id == wedding_id, Guest.status == 1).all()
+    total_guests_pax = sum(g.pax_count for g in guests)
+    attending_pax = sum(g.pax_count for g in guests if g.rsvp_status == RSVPStatusEnum.ATTENDING)
+    total_invited = len(guests)
+    rsvp_attending = len([g for g in guests if g.rsvp_status == RSVPStatusEnum.ATTENDING])
+
+    budget_items = db.query(BudgetItem).filter(BudgetItem.wedding_id == wedding_id, BudgetItem.status == 1).all()
+    total_damage = 0.0
+    for item in budget_items:
+        if item.paid_amount_encrypted:
+            try:
+                val = decrypt_data(item.paid_amount_encrypted)
+                if val:
+                    total_damage += float(val)
+            except Exception:
+                pass
+
+    vendors = db.query(Vendor).filter(Vendor.wedding_id == wedding_id, Vendor.status == 1).all()
+    confirmed_vendors = len([v for v in vendors if v.vendor_status in CONFIRMED_VENDOR_STATUSES])
+
+    tasks = db.query(Task).filter(Task.wedding_id == wedding_id, Task.status == 1).all()
+    tasks_completed = len([t for t in tasks if t.is_completed])
+    tasks_total = len(tasks)
+
+    return {
+        "total_guests_pax": total_guests_pax,
+        "attending_pax": attending_pax,
+        "total_invited": total_invited,
+        "rsvp_attending": rsvp_attending,
+        "total_damage": round(total_damage, 2),
+        "confirmed_vendors": confirmed_vendors,
+        "total_vendor_categories": TOTAL_VENDOR_CATEGORIES,
+        "tasks_completed": tasks_completed,
+        "tasks_total": tasks_total,
+    }
 
 
 @router.post("/{wedding_id}/collaborators")

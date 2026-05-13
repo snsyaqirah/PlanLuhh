@@ -2,9 +2,21 @@ from pydantic import BaseModel, EmailStr, field_validator
 import re
 
 
+SUPPORTED_CURRENCIES = {"MYR", "USD", "SGD", "GBP", "EUR", "AUD", "JPY", "SAR"}
+
+
 class RegisterRequest(BaseModel):
     email: EmailStr
     full_name: str
+    preferred_currency: str = "MYR"
+
+    @field_validator("preferred_currency")
+    @classmethod
+    def currency_valid(cls, v: str) -> str:
+        v = v.upper().strip()
+        if v not in SUPPORTED_CURRENCIES:
+            raise ValueError(f"Currency must be one of: {', '.join(sorted(SUPPORTED_CURRENCIES))}")
+        return v
 
     @field_validator("full_name")
     @classmethod

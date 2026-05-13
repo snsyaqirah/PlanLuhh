@@ -1,111 +1,364 @@
-import { useQuery } from 'react-query'
+import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { motion } from 'framer-motion'
-import { Users, Wallet, CheckSquare, ShoppingBag, Clock, Heart } from 'lucide-react'
+import {
+  Users, Wallet, CheckSquare, ShoppingBag, Heart,
+  CalendarDays, MapPin, Save, Loader2,
+} from 'lucide-react'
 import { differenceInDays, format } from 'date-fns'
+import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import toast from 'react-hot-toast'
 import api from '@/utils/api'
 import { useAuth } from '@/context/AuthContext'
 
-const StatCard = ({ icon: Icon, label, value, color }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="card flex items-center gap-4"
-  >
-    <div className={`p-3 rounded-xl ${color}`}>
-      <Icon size={22} className="text-white" />
-    </div>
+function StatCard({ icon: Icon, label, value, sub, color, delay = 0 }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-start gap-4"
+    >
+      <div className={`p-3 rounded-xl flex-shrink-0 ${color}`}>
+        <Icon size={20} className="text-white" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</p>
+        <p className="text-2xl font-bold text-gray-900 mt-0.5">{value}</p>
+        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      </div>
+    </motion.div>
+  )
+}
+
+function RSVPCard({ attending, total, delay = 0 }) {
+  const pct = total > 0 ? Math.round((attending / total) * 100) : 0
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-start gap-4"
+    >
+      <div className="p-3 rounded-xl flex-shrink-0 bg-emerald-500">
+        <Users size={20} className="text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">RSVP Status</p>
+        <p className="text-2xl font-bold text-gray-900 mt-0.5">
+          {attending} <span className="text-base font-normal text-gray-400">/ {total} hadir</span>
+        </p>
+        <div className="mt-2 w-full bg-gray-100 rounded-full h-1.5">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.7, ease: 'easeOut', delay: delay + 0.2 }}
+            className="bg-emerald-500 h-1.5 rounded-full"
+          />
+        </div>
+        <p className="text-xs text-gray-400 mt-1">{pct}% confirmed</p>
+      </div>
+    </motion.div>
+  )
+}
+
+function ProgressBar({ label, completed, total, color = 'bg-primary-600', delay = 0 }) {
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+  return (
     <div>
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-sm font-medium text-gray-700">{label}</span>
+        <span className="text-sm font-bold text-gray-900">
+          {completed}<span className="text-gray-400 font-normal">/{total}</span>
+        </span>
+      </div>
+      <div className="w-full bg-gray-100 rounded-full h-2.5">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.8, ease: 'easeOut', delay }}
+          className={`${color} h-2.5 rounded-full`}
+        />
+      </div>
+      <p className="text-xs text-gray-400 mt-1">{pct}% selesai</p>
     </div>
-  </motion.div>
-)
+  )
+}
+
+function Field({ label, error, children }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{label}</label>
+      {children}
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+  )
+}
 
 export default function MissionControlPage() {
   const { user } = useAuth()
-  const { data: weddings } = useQuery('weddings', () => api.get('/weddings').then(r => r.data))
+  const queryClient = useQueryClient()
+
+  const { data: weddings, isLoading: weddingsLoading } = useQuery(
+    'weddings',
+    () => api.get('/weddings').then(r => r.data),
+  )
   const wedding = weddings?.[0]
   const weddingId = wedding?.id
 
-  const { data: guests } = useQuery(['guests', weddingId], () => api.get(`/weddings/${weddingId}/guests`).then(r => r.data), { enabled: !!weddingId })
-  const { data: tasks } = useQuery(['tasks', weddingId], () => api.get(`/weddings/${weddingId}/tasks`).then(r => r.data), { enabled: !!weddingId })
-  const { data: vendors } = useQuery(['vendors', weddingId], () => api.get(`/weddings/${weddingId}/vendors`).then(r => r.data), { enabled: !!weddingId })
+  const { data: stats } = useQuery(
+    ['stats', weddingId],
+    () => api.get(`/weddings/${weddingId}/stats`).then(r => r.data),
+    { enabled: !!weddingId },
+  )
+
+  const currency = user?.preferred_currency ?? 'MYR'
 
   const daysLeft = wedding?.wedding_date
     ? differenceInDays(new Date(wedding.wedding_date), new Date())
     : null
 
-  const completedTasks = tasks?.filter(t => t.is_completed).length || 0
-  const totalTasks = tasks?.length || 0
-  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
-  const attendingGuests = guests?.filter(g => g.rsvp_status === 'ATTENDING').reduce((sum, g) => sum + g.pax_count, 0) || 0
+  const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm()
+
+  useEffect(() => {
+    if (wedding) {
+      reset({
+        groom_name: wedding.groom_name ?? '',
+        bride_name: wedding.bride_name ?? '',
+        groom_father_name: wedding.groom_father_name ?? '',
+        groom_mother_name: wedding.groom_mother_name ?? '',
+        bride_father_name: wedding.bride_father_name ?? '',
+        bride_mother_name: wedding.bride_mother_name ?? '',
+        wedding_date: wedding.wedding_date ?? '',
+        venue_name: wedding.venue_name ?? '',
+        budget_total: wedding.budget_total ?? '',
+      })
+    }
+  }, [wedding, reset])
+
+  const saveMutation = useMutation(
+    (data) => api.patch(`/weddings/${weddingId}`, data),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('weddings')
+        toast.success('Wedding settings saved!')
+      },
+      onError: () => toast.error('Failed to save. Try again.'),
+    },
+  )
+
+  const createMutation = useMutation(
+    (data) => api.post('/weddings', data),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('weddings')
+        toast.success('Wedding created!')
+      },
+      onError: () => toast.error('Failed to create. Try again.'),
+    },
+  )
+
+  const isSaving = saveMutation.isLoading || createMutation.isLoading
+
+  const onSave = (data) => {
+    const payload = { ...data }
+    if (payload.budget_total !== '') payload.budget_total = parseFloat(payload.budget_total)
+    else delete payload.budget_total
+    if (weddingId) {
+      saveMutation.mutate(payload)
+    } else {
+      createMutation.mutate(payload)
+    }
+  }
+
+  const inputCls = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent'
+
+  if (weddingsLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="animate-spin text-primary-500" size={32} />
+      </div>
+    )
+  }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
+
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-1">
-          <Heart className="text-blush-500" size={24} />
-          <h1 className="text-3xl font-serif text-gray-900">
-            {wedding ? `${wedding.groom_name} & ${wedding.bride_name}` : 'Mission Control'}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {wedding ? `${wedding.groom_name} & ${wedding.bride_name}` : 'Dashboard'}
           </h1>
+          {wedding?.wedding_date && (
+            <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1.5">
+              <CalendarDays size={14} />
+              {format(new Date(wedding.wedding_date), 'EEEE, d MMMM yyyy')}
+              {daysLeft !== null && (
+                <span className={`ml-2 font-semibold ${daysLeft > 0 ? 'text-primary-600' : 'text-emerald-600'}`}>
+                  {daysLeft > 0 ? `· ${daysLeft} hari lagi` : daysLeft === 0 ? '· Hari ini! 🎉' : '· Dah lepas! 🎊'}
+                </span>
+              )}
+            </p>
+          )}
         </div>
-        {wedding?.wedding_date && (
-          <p className="text-gray-500 ml-9">{format(new Date(wedding.wedding_date), 'EEEE, d MMMM yyyy')}</p>
-        )}
+        <Heart className="text-blush-400" size={28} />
       </div>
 
-      {/* Countdown */}
-      {daysLeft !== null && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="card bg-gradient-to-r from-primary-600 to-primary-800 text-white mb-6"
-        >
-          <div className="flex items-center gap-4">
-            <Clock size={32} />
-            <div>
-              <p className="text-primary-200 text-sm">Countdown</p>
-              <p className="text-4xl font-bold">{daysLeft > 0 ? `${daysLeft} days to go` : daysLeft === 0 ? 'Today is the day!' : 'Congratulations!'}</p>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard icon={Users} label="Attending" value={attendingGuests} color="bg-blue-500" />
-        <StatCard icon={Users} label="Total Guests" value={guests?.length || 0} color="bg-indigo-500" />
-        <StatCard icon={ShoppingBag} label="Vendors" value={vendors?.length || 0} color="bg-purple-500" />
-        <StatCard icon={CheckSquare} label="Tasks Done" value={`${completedTasks}/${totalTasks}`} color="bg-emerald-500" />
-      </div>
-
-      {/* Progress */}
-      <div className="card mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-gray-900">Overall Progress</h2>
-          <span className="text-primary-600 font-bold">{progress}%</span>
-        </div>
-        <div className="w-full bg-gray-100 rounded-full h-3">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-            className="bg-primary-600 h-3 rounded-full"
+      {/* 4 Stat Cards */}
+      {wedding ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            icon={Users}
+            label="Total Guest"
+            value={stats?.total_guests_pax ?? '—'}
+            sub={`${stats?.attending_pax ?? 0} confirmed pax`}
+            color="bg-blue-500"
+            delay={0}
+          />
+          <StatCard
+            icon={Wallet}
+            label="Total Damage"
+            value={stats ? `${currency} ${stats.total_damage.toLocaleString('en-MY', { minimumFractionDigits: 2 })}` : '—'}
+            sub="Total paid so far"
+            color="bg-rose-500"
+            delay={0.05}
+          />
+          <RSVPCard
+            attending={stats?.rsvp_attending ?? 0}
+            total={stats?.total_invited ?? 0}
+            delay={0.1}
+          />
+          <StatCard
+            icon={ShoppingBag}
+            label="Confirmed Vendors"
+            value={`${stats?.confirmed_vendors ?? 0} / ${stats?.total_vendor_categories ?? 13}`}
+            sub="categories confirmed"
+            color="bg-violet-500"
+            delay={0.15}
           />
         </div>
-        <p className="text-gray-500 text-sm mt-2">{completedTasks} of {totalTasks} tasks completed</p>
-      </div>
-
-      {/* Quick Actions */}
-      {!wedding && (
-        <div className="card text-center">
-          <Heart className="mx-auto text-blush-400 mb-4" size={48} />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Welcome to PlanLuhh!</h2>
-          <p className="text-gray-500 mb-4">Start by creating your wedding profile.</p>
-          <button className="btn-primary">Create Wedding Profile</button>
+      ) : (
+        <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center">
+          <Heart className="mx-auto text-blush-300 mb-4" size={40} />
+          <p className="text-gray-500 font-medium">Fill in your Wedding Settings below to get started.</p>
         </div>
       )}
+
+      {/* Long Progress Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6"
+      >
+        <div className="flex items-center gap-2 mb-5">
+          <CheckSquare size={18} className="text-primary-600" />
+          <h2 className="font-semibold text-gray-900">Completion Progress</h2>
+        </div>
+        <div className="space-y-5">
+          <ProgressBar
+            label="Checklist"
+            completed={stats?.tasks_completed ?? 0}
+            total={stats?.tasks_total ?? 0}
+            color="bg-primary-600"
+            delay={0.3}
+          />
+          <ProgressBar
+            label="Vendor Categories"
+            completed={stats?.confirmed_vendors ?? 0}
+            total={stats?.total_vendor_categories ?? 13}
+            color="bg-violet-500"
+            delay={0.35}
+          />
+        </div>
+      </motion.div>
+
+      {/* Wedding Profile + Settings */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+      >
+        <div className="bg-gradient-to-r from-primary-600 to-primary-800 px-6 py-5">
+          <h2 className="text-white font-semibold text-lg">Wedding Settings</h2>
+          {wedding?.venue_name && (
+            <p className="text-primary-200 text-sm mt-0.5 flex items-center gap-1.5">
+              <MapPin size={13} />
+              {wedding.venue_name}
+            </p>
+          )}
+        </div>
+
+        <form onSubmit={handleSubmit(onSave)} className="p-6 space-y-6">
+          {/* Pengantin */}
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Pengantin</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Nama Pengantin Lelaki" error={errors.groom_name?.message}>
+                <input {...register('groom_name', { required: 'Required' })} className={inputCls} placeholder="Ahmad bin Abdullah" />
+              </Field>
+              <Field label="Nama Pengantin Perempuan" error={errors.bride_name?.message}>
+                <input {...register('bride_name', { required: 'Required' })} className={inputCls} placeholder="Siti binti Rahmat" />
+              </Field>
+            </div>
+          </div>
+
+          {/* Penjaga */}
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Penjaga — untuk E-Card</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+              <div className="space-y-4">
+                <p className="text-xs font-semibold text-gray-500 mb-2">Pihak Lelaki</p>
+                <Field label="Ayah / Penjaga 1">
+                  <input {...register('groom_father_name')} className={inputCls} placeholder="Abdullah bin Ahmad" />
+                </Field>
+                <Field label="Emak / Penjaga 2">
+                  <input {...register('groom_mother_name')} className={inputCls} placeholder="Fatimah binti Yusof" />
+                </Field>
+              </div>
+              <div className="space-y-4">
+                <p className="text-xs font-semibold text-gray-500 mb-2">Pihak Perempuan</p>
+                <Field label="Ayah / Penjaga 1">
+                  <input {...register('bride_father_name')} className={inputCls} placeholder="Rahmat bin Ismail" />
+                </Field>
+                <Field label="Emak / Penjaga 2">
+                  <input {...register('bride_mother_name')} className={inputCls} placeholder="Zainab binti Hassan" />
+                </Field>
+              </div>
+            </div>
+          </div>
+
+          {/* Event Details */}
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Event Details</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Field label="Tarikh Majlis">
+                <input {...register('wedding_date')} type="date" className={inputCls} />
+              </Field>
+              <Field label="Venue">
+                <input {...register('venue_name')} className={inputCls} placeholder="Dewan Seri Kenangan" />
+              </Field>
+              <Field label={`Budget Ceiling (${currency})`}>
+                <input {...register('budget_total')} type="number" step="0.01" min="0" className={inputCls} placeholder="50000" />
+              </Field>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={(!isDirty && !!weddingId) || isSaving}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {isSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+              {weddingId ? 'Save Settings' : 'Create Wedding'}
+            </button>
+          </div>
+        </form>
+      </motion.div>
+
     </div>
   )
 }

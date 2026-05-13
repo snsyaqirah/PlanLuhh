@@ -27,7 +27,7 @@ async def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         await send_otp_email(existing.email, existing.full_name or "there", code)
         return {"message": "Verification code resent"}
 
-    user = User(email=payload.email, full_name=payload.full_name)
+    user = User(email=payload.email, full_name=payload.full_name, preferred_currency=payload.preferred_currency)
     db.add(user)
     db.flush()
     code = create_otp(db, str(user.id))

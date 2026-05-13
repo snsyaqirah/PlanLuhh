@@ -19,6 +19,10 @@ class WeddingCreate(BaseModel):
     theme: Optional[WeddingThemeEnum] = WeddingThemeEnum.OTHER
     budget_total: Optional[Decimal] = Decimal("0")
     notes: Optional[str] = None
+    groom_father_name: Optional[str] = None
+    groom_mother_name: Optional[str] = None
+    bride_father_name: Optional[str] = None
+    bride_mother_name: Optional[str] = None
 
 
 class WeddingUpdate(BaseModel):
@@ -34,6 +38,10 @@ class WeddingUpdate(BaseModel):
     theme: Optional[WeddingThemeEnum] = None
     budget_total: Optional[Decimal] = None
     notes: Optional[str] = None
+    groom_father_name: Optional[str] = None
+    groom_mother_name: Optional[str] = None
+    bride_father_name: Optional[str] = None
+    bride_mother_name: Optional[str] = None
 
 
 class WeddingOut(BaseModel):
@@ -51,6 +59,10 @@ class WeddingOut(BaseModel):
     budget_total: Decimal
     cover_photo: Optional[str]
     notes: Optional[str]
+    groom_father_name: Optional[str]
+    groom_mother_name: Optional[str]
+    bride_father_name: Optional[str]
+    bride_mother_name: Optional[str]
     created_at: datetime
     updated_at: datetime
 

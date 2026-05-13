@@ -21,6 +21,7 @@ class User(Base, UUIDMixin, TimestampMixin):
     account_status = Column(SAEnum(UserStatusEnum), default=UserStatusEnum.PENDING, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     profile_pic = Column(String(500), nullable=True)
+    preferred_currency = Column(String(10), default="MYR", nullable=False)
 
     # Relationships
     otps = relationship("OTPVerification", back_populates="user", cascade="all, delete-orphan")
