@@ -7,7 +7,7 @@ from slowapi.errors import RateLimitExceeded
 import os
 
 from app.core.config import settings
-from app.routers import auth, users, wedding, guests, vendors, tasks, budget, invitation, documents, moodboard, schedule, rundown, hantaran, menu
+from app.routers import auth, users, wedding, guests, vendors, tasks, budget, invitation, documents, moodboard, schedule, rundown, hantaran, menu, seating, gift, honeymoon
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -49,6 +49,9 @@ app.include_router(schedule.router, prefix="/api/v1")
 app.include_router(rundown.router, prefix="/api/v1")
 app.include_router(hantaran.router, prefix="/api/v1")
 app.include_router(menu.router, prefix="/api/v1")
+app.include_router(seating.router, prefix="/api/v1")
+app.include_router(gift.router, prefix="/api/v1")
+app.include_router(honeymoon.router, prefix="/api/v1")
 
 
 @app.get("/api/v1/health")

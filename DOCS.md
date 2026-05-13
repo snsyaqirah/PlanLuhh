@@ -73,10 +73,10 @@ Dashboard
 | Menu | ✅ Done |
 | Hantaran | ✅ Done |
 | E-Invitation Builder | ✅ Done |
-| RSVP Dashboard | 🚧 Stub |
-| Seating | 🚧 Stub |
-| Gift Registry | 🚧 Stub |
-| Honeymoon | 🚧 Stub |
+| RSVP Dashboard | ✅ Done |
+| Seating | ✅ Done |
+| Gift Registry | ✅ Done |
+| Honeymoon | ✅ Done |
 
 > Note: All backend APIs are fully implemented. Only the frontend UI is pending for stub pages.
 

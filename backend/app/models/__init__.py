@@ -16,6 +16,7 @@ from app.models.honeymoon import Honeymoon, HoneymoonItem
 from app.models.document_checklist import DocumentChecklistItem
 from app.models.rundown import RundownEntry
 from app.models.hantaran import HantaranItem
+from app.models.gift import GiftRegistryItem, GiftReceived
 from app.models.audit_log import AuditLog
 
 __all__ = [
@@ -29,5 +30,6 @@ __all__ = [
     "GuestbookEntry", "RSVPResponse", "GalleryPhoto",
     "Honeymoon", "HoneymoonItem",
     "DocumentChecklistItem", "RundownEntry", "HantaranItem",
+    "GiftRegistryItem", "GiftReceived",
     "AuditLog",
 ]

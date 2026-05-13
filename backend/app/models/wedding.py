@@ -69,4 +69,6 @@ class Wedding(Base, UUIDMixin, TimestampMixin):
     document_items = relationship("DocumentChecklistItem", back_populates="wedding", cascade="all, delete-orphan")
     rundown_entries = relationship("RundownEntry", back_populates="wedding", cascade="all, delete-orphan")
     hantaran_items = relationship("HantaranItem", back_populates="wedding", cascade="all, delete-orphan")
+    gift_registry_items = relationship("GiftRegistryItem", back_populates="wedding", cascade="all, delete-orphan")
+    gifts_received = relationship("GiftReceived", back_populates="wedding", cascade="all, delete-orphan")
     audit_logs = relationship("AuditLog", back_populates="wedding")
