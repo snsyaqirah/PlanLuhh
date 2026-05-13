@@ -14,6 +14,8 @@ from app.models.menu import MenuItem
 from app.models.invitation import Invitation, LoveStory, ContactPerson, GuestbookEntry, RSVPResponse, GalleryPhoto
 from app.models.honeymoon import Honeymoon, HoneymoonItem
 from app.models.document_checklist import DocumentChecklistItem
+from app.models.rundown import RundownEntry
+from app.models.hantaran import HantaranItem
 from app.models.audit_log import AuditLog
 
 __all__ = [
@@ -26,6 +28,6 @@ __all__ = [
     "Invitation", "LoveStory", "ContactPerson",
     "GuestbookEntry", "RSVPResponse", "GalleryPhoto",
     "Honeymoon", "HoneymoonItem",
-    "DocumentChecklistItem",
+    "DocumentChecklistItem", "RundownEntry", "HantaranItem",
     "AuditLog",
 ]

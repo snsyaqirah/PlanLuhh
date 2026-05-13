@@ -15,6 +15,8 @@ class MoodboardCategoryEnum(str, enum.Enum):
     FOOD = "FOOD"
     INVITATION = "INVITATION"
     HAIR_MAKEUP = "HAIR_MAKEUP"
+    PELAMIN = "PELAMIN"
+    HENNA = "HENNA"
     OTHER = "OTHER"
 
 

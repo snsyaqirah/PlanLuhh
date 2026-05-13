@@ -113,6 +113,20 @@ def list_love_story(
     return db.query(LoveStory).filter(LoveStory.invitation_id == inv.id, LoveStory.status == 1).order_by(LoveStory.sort_order).all()
 
 
+@router.delete("/weddings/{wedding_id}/invitation/love-story/{entry_id}", status_code=204)
+def delete_love_story(
+    wedding_id: str, entry_id: str,
+    db: Session = Depends(get_db), current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+    inv = _get_inv(db, wedding_id)
+    e = db.query(LoveStory).filter(LoveStory.id == entry_id, LoveStory.invitation_id == inv.id).first()
+    if not e:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    e.status = 0
+    db.commit()
+
+
 # ─── Contact Persons ──────────────────────────────────────────────────────────
 
 @router.post("/weddings/{wedding_id}/invitation/contacts", response_model=ContactPersonOut, status_code=201)
@@ -138,6 +152,20 @@ def list_contacts(
     return db.query(ContactPerson).filter(ContactPerson.invitation_id == inv.id, ContactPerson.status == 1).all()
 
 
+@router.delete("/weddings/{wedding_id}/invitation/contacts/{contact_id}", status_code=204)
+def delete_contact(
+    wedding_id: str, contact_id: str,
+    db: Session = Depends(get_db), current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+    inv = _get_inv(db, wedding_id)
+    c = db.query(ContactPerson).filter(ContactPerson.id == contact_id, ContactPerson.invitation_id == inv.id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    c.status = 0
+    db.commit()
+
+
 # ─── Gallery ─────────────────────────────────────────────────────────────────
 
 @router.post("/weddings/{wedding_id}/invitation/gallery", response_model=GalleryPhotoOut, status_code=201)
@@ -152,6 +180,87 @@ def add_gallery_photo(
     db.commit()
     db.refresh(photo)
     return photo
+
+
+@router.get("/weddings/{wedding_id}/invitation/gallery", response_model=List[GalleryPhotoOut])
+def list_gallery(
+    wedding_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+    inv = _get_inv(db, wedding_id)
+    return db.query(GalleryPhoto).filter(GalleryPhoto.invitation_id == inv.id, GalleryPhoto.status == 1).order_by(GalleryPhoto.sort_order).all()
+
+
+@router.delete("/weddings/{wedding_id}/invitation/gallery/{photo_id}", status_code=204)
+def delete_gallery_photo(
+    wedding_id: str, photo_id: str,
+    db: Session = Depends(get_db), current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+    inv = _get_inv(db, wedding_id)
+    p = db.query(GalleryPhoto).filter(GalleryPhoto.id == photo_id, GalleryPhoto.invitation_id == inv.id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    p.status = 0
+    db.commit()
+
+
+# ─── Admin: RSVP & Guestbook management ──────────────────────────────────────
+
+@router.get("/weddings/{wedding_id}/invitation/rsvp", response_model=List[RSVPOut])
+def list_rsvp(
+    wedding_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+    inv = _get_inv(db, wedding_id)
+    return db.query(RSVPResponse).filter(RSVPResponse.invitation_id == inv.id).order_by(RSVPResponse.created_at.desc()).all()
+
+
+@router.get("/weddings/{wedding_id}/invitation/guestbook", response_model=List[GuestbookEntryOut])
+def list_guestbook_admin(
+    wedding_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+    inv = _get_inv(db, wedding_id)
+    return db.query(GuestbookEntry).filter(
+        GuestbookEntry.invitation_id == inv.id,
+        GuestbookEntry.status == 1,
+    ).order_by(GuestbookEntry.created_at.desc()).all()
+
+
+@router.patch("/weddings/{wedding_id}/invitation/guestbook/{entry_id}/approve")
+def approve_guestbook(
+    wedding_id: str, entry_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+    inv = _get_inv(db, wedding_id)
+    e = db.query(GuestbookEntry).filter(GuestbookEntry.id == entry_id, GuestbookEntry.invitation_id == inv.id).first()
+    if not e:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    e.is_approved = not e.is_approved
+    db.commit()
+    return {"is_approved": e.is_approved}
+
+
+@router.delete("/weddings/{wedding_id}/invitation/guestbook/{entry_id}", status_code=204)
+def delete_guestbook(
+    wedding_id: str, entry_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+    inv = _get_inv(db, wedding_id)
+    e = db.query(GuestbookEntry).filter(GuestbookEntry.id == entry_id, GuestbookEntry.invitation_id == inv.id).first()
+    if not e:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    e.status = 0
+    db.commit()
 
 
 # ─── Public endpoints (no auth) ───────────────────────────────────────────────

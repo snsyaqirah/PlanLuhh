@@ -63,16 +63,16 @@ Dashboard
 | Dashboard + Wedding Settings | ✅ Done |
 | Budget | ✅ Done |
 | Profile Page | ✅ Done |
-| Moodboard | 🚧 Stub |
+| Moodboard | ✅ Done |
 | Vendors | ✅ Done |
 | Document Hub | ✅ Done |
-| Schedule | 🚧 Stub |
-| Rundown | 🚧 Stub |
-| Checklist / Tasks | 🚧 Stub |
+| Schedule | ✅ Done |
+| Rundown | ✅ Done |
+| Checklist / Tasks | ✅ Done |
 | Guests | ✅ Done |
-| Menu | 🚧 Stub |
-| Hantaran | 🚧 Stub |
-| E-Invitation Builder | 🚧 Stub |
+| Menu | ✅ Done |
+| Hantaran | ✅ Done |
+| E-Invitation Builder | ✅ Done |
 | RSVP Dashboard | 🚧 Stub |
 | Seating | 🚧 Stub |
 | Gift Registry | 🚧 Stub |

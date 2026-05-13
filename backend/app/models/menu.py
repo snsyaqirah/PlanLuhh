@@ -25,5 +25,6 @@ class MenuItem(Base, UUIDMixin, TimestampMixin):
     is_halal = Column(Boolean, default=True, nullable=False)
     is_confirmed = Column(Boolean, default=False, nullable=False)
     notes = Column(String(500), nullable=True)
+    quantity = Column(String(100), nullable=True)
 
     wedding = relationship("Wedding", back_populates="menu_items")

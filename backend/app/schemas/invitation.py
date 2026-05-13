@@ -123,6 +123,8 @@ class RSVPOut(BaseModel):
     response: str
     pax_count: int
     meal_preference: Optional[str]
+    allergies: Optional[str]
+    message: Optional[str]
     created_at: datetime
 
     model_config = {"from_attributes": True}
