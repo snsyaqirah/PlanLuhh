@@ -46,31 +46,30 @@ export default function App() {
         {/* Public Invitation */}
         <Route path="/i/:slug" element={<InvitationPublicPage />} />
 
-        {/* Protected Dashboard */}
+        {/* Protected — all share DashboardLayout (sidebar) but have their own top-level paths */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<MissionControlPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="settings" element={<Navigate to="/dashboard" replace />} />
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard" element={<MissionControlPage />} />
+            <Route path="/dashboard/profile" element={<ProfilePage />} />
             {/* Foundation */}
-            <Route path="budget" element={<BudgetPage />} />
-            <Route path="moodboard" element={<MoodboardPage />} />
-            <Route path="vendors" element={<VendorsPage />} />
-            <Route path="documents" element={<DocumentsHubPage />} />
+            <Route path="/foundation/budget" element={<BudgetPage />} />
+            <Route path="/foundation/moodboard" element={<MoodboardPage />} />
+            <Route path="/foundation/vendors" element={<VendorsPage />} />
+            <Route path="/foundation/documents" element={<DocumentsHubPage />} />
             {/* Planning */}
-            <Route path="schedule" element={<SchedulePage />} />
-            <Route path="rundown" element={<RundownPage />} />
-            <Route path="tasks" element={<TasksPage />} />
-            <Route path="guests" element={<GuestsPage />} />
-            <Route path="menu" element={<MenuPage />} />
-            <Route path="hantaran" element={<HantaranPage />} />
+            <Route path="/planning/schedule" element={<SchedulePage />} />
+            <Route path="/planning/rundown" element={<RundownPage />} />
+            <Route path="/planning/tasks" element={<TasksPage />} />
+            <Route path="/planning/guests" element={<GuestsPage />} />
+            <Route path="/planning/menu" element={<MenuPage />} />
+            <Route path="/planning/hantaran" element={<HantaranPage />} />
             {/* Execution */}
-            <Route path="invitation" element={<InvitationBuilderPage />} />
-            <Route path="rsvp" element={<RSVPDashboardPage />} />
-            <Route path="seating" element={<SeatingPage />} />
+            <Route path="/execution/invitation" element={<InvitationBuilderPage />} />
+            <Route path="/execution/rsvp" element={<RSVPDashboardPage />} />
+            <Route path="/execution/seating" element={<SeatingPage />} />
             {/* Post-Wedding */}
-            <Route path="gifts" element={<GiftRegistryPage />} />
-            <Route path="honeymoon" element={<HoneymoonPage />} />
+            <Route path="/post-wedding/gifts" element={<GiftRegistryPage />} />
+            <Route path="/post-wedding/honeymoon" element={<HoneymoonPage />} />
           </Route>
         </Route>
 
