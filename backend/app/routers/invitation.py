@@ -1,14 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
+import os, uuid as uuid_lib
+import aiofiles
+from app.core.config import settings
 
 from app.core.database import get_db
-from app.core.deps import get_verified_user
+from app.core.deps import get_verified_user, get_optional_user
 from app.models.user import User
 from app.models.invitation import (
-    Invitation, LoveStory, ContactPerson, GuestbookEntry, RSVPResponse, GalleryPhoto
+    Invitation, LoveStory, ContactPerson, GuestbookEntry, RSVPResponse, GalleryPhoto,
+    InvitationCustomPage,
 )
 from app.models.wedding import Wedding
+from app.models.gift import GiftRegistryItem
 from app.schemas.invitation import (
     InvitationCreate, InvitationUpdate, InvitationOut,
     LoveStoryCreate, LoveStoryOut,
@@ -16,6 +21,7 @@ from app.schemas.invitation import (
     GuestbookEntryCreate, GuestbookEntryOut,
     RSVPCreate, RSVPOut,
     GalleryPhotoCreate, GalleryPhotoOut,
+    InvitationCustomPageOut,
 )
 from app.routers.wedding import _assert_access
 
@@ -205,6 +211,34 @@ def delete_gallery_photo(
     db.commit()
 
 
+# ─── DuitNow QR upload ───────────────────────────────────────────────────────
+
+ALLOWED_IMG = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+
+@router.post("/weddings/{wedding_id}/invitation/upload-qr")
+async def upload_duitnow_qr(
+    wedding_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+    if file.content_type not in ALLOWED_IMG:
+        raise HTTPException(status_code=400, detail="Only image files allowed")
+    inv = _get_inv(db, wedding_id)
+    dest_dir = os.path.join(settings.UPLOAD_DIR, "qr", wedding_id)
+    os.makedirs(dest_dir, exist_ok=True)
+    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "png"
+    fname = f"{uuid_lib.uuid4()}.{ext}"
+    fpath = os.path.join(dest_dir, fname)
+    async with aiofiles.open(fpath, "wb") as f:
+        await f.write(await file.read())
+    url = f"/uploads/qr/{wedding_id}/{fname}"
+    inv.duitnow_qr_url = url
+    db.commit()
+    return {"url": url}
+
+
 # ─── Admin: RSVP & Guestbook management ──────────────────────────────────────
 
 @router.get("/weddings/{wedding_id}/invitation/rsvp", response_model=List[RSVPOut])
@@ -263,20 +297,101 @@ def delete_guestbook(
     db.commit()
 
 
+# ─── Custom Design Pages ──────────────────────────────────────────────────────
+
+MAX_CUSTOM_PAGES = 20
+
+@router.post("/weddings/{wedding_id}/invitation/custom-pages", response_model=InvitationCustomPageOut, status_code=201)
+async def upload_custom_page(
+    wedding_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+    if file.content_type not in ALLOWED_IMG:
+        raise HTTPException(status_code=400, detail="Only image files allowed")
+    inv = _get_inv(db, wedding_id)
+    existing_count = db.query(InvitationCustomPage).filter(
+        InvitationCustomPage.invitation_id == inv.id,
+        InvitationCustomPage.status == 1,
+    ).count()
+    if existing_count >= MAX_CUSTOM_PAGES:
+        raise HTTPException(status_code=400, detail=f"Maximum {MAX_CUSTOM_PAGES} pages allowed")
+    dest_dir = os.path.join(settings.UPLOAD_DIR, "custom-design", wedding_id)
+    os.makedirs(dest_dir, exist_ok=True)
+    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
+    fname = f"{uuid_lib.uuid4()}.{ext}"
+    fpath = os.path.join(dest_dir, fname)
+    async with aiofiles.open(fpath, "wb") as f:
+        await f.write(await file.read())
+    url = f"/uploads/custom-design/{wedding_id}/{fname}"
+    page = InvitationCustomPage(invitation_id=inv.id, image_url=url, sort_order=existing_count)
+    db.add(page)
+    db.commit()
+    db.refresh(page)
+    return page
+
+
+@router.get("/weddings/{wedding_id}/invitation/custom-pages", response_model=List[InvitationCustomPageOut])
+def list_custom_pages(
+    wedding_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+    inv = _get_inv(db, wedding_id)
+    return db.query(InvitationCustomPage).filter(
+        InvitationCustomPage.invitation_id == inv.id,
+        InvitationCustomPage.status == 1,
+    ).order_by(InvitationCustomPage.sort_order).all()
+
+
+@router.delete("/weddings/{wedding_id}/invitation/custom-pages/{page_id}", status_code=204)
+def delete_custom_page(
+    wedding_id: str, page_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_verified_user),
+):
+    _assert_access(db, wedding_id, current_user)
+    inv = _get_inv(db, wedding_id)
+    page = db.query(InvitationCustomPage).filter(
+        InvitationCustomPage.id == page_id,
+        InvitationCustomPage.invitation_id == inv.id,
+    ).first()
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    page.status = 0
+    db.commit()
+
+
 # ─── Public endpoints (no auth) ───────────────────────────────────────────────
 
 @router.get("/i/{slug}", tags=["public"])
-def view_invitation_public(slug: str, db: Session = Depends(get_db)):
-    inv = db.query(Invitation).filter(Invitation.slug == slug, Invitation.is_published == True, Invitation.status == 1).first()
+def view_invitation_public(
+    slug: str,
+    preview: bool = False,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_optional_user),
+):
+    q = db.query(Invitation).filter(Invitation.slug == slug, Invitation.status == 1)
+    if not (preview and current_user):
+        q = q.filter(Invitation.is_published == True)
+    inv = q.first()
     if not inv:
         raise HTTPException(status_code=404, detail="Invitation not found")
     wedding = db.query(Wedding).filter(Wedding.id == inv.wedding_id).first()
+    custom_pages = db.query(InvitationCustomPage).filter(
+        InvitationCustomPage.invitation_id == inv.id,
+        InvitationCustomPage.status == 1,
+    ).order_by(InvitationCustomPage.sort_order).all() if inv.use_custom_design else []
     return {
         "invitation": inv,
         "wedding": wedding,
         "love_story": db.query(LoveStory).filter(LoveStory.invitation_id == inv.id, LoveStory.status == 1).order_by(LoveStory.sort_order).all() if inv.show_love_story else [],
         "contacts": db.query(ContactPerson).filter(ContactPerson.invitation_id == inv.id, ContactPerson.status == 1).all(),
         "gallery": db.query(GalleryPhoto).filter(GalleryPhoto.invitation_id == inv.id, GalleryPhoto.status == 1).order_by(GalleryPhoto.sort_order).all(),
+        "custom_pages": custom_pages,
     }
 
 
@@ -324,6 +439,23 @@ def get_guestbook(slug: str, db: Session = Depends(get_db)):
         GuestbookEntry.is_approved == True,
         GuestbookEntry.status == 1,
     ).order_by(GuestbookEntry.created_at.desc()).all()
+
+
+@router.get("/i/{slug}/gifts", tags=["public"])
+def get_public_gifts(slug: str, db: Session = Depends(get_db)):
+    inv = db.query(Invitation).filter(Invitation.slug == slug, Invitation.is_published == True, Invitation.status == 1).first()
+    if not inv or not inv.show_gift_registry:
+        raise HTTPException(status_code=404, detail="Not found")
+    items = db.query(GiftRegistryItem).filter(
+        GiftRegistryItem.wedding_id == inv.wedding_id,
+        GiftRegistryItem.is_visible == True,
+        GiftRegistryItem.status == 1,
+    ).all()
+    return [
+        {"id": str(i.id), "name": i.item_name, "link": i.item_link,
+         "target_qty": i.target_quantity, "claimed_count": i.claimed_count}
+        for i in items
+    ]
 
 
 def _get_inv(db: Session, wedding_id: str) -> Invitation:

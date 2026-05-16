@@ -2,11 +2,11 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { motion } from 'framer-motion'
 import {
   Users, Wallet, CheckSquare, ShoppingBag, Heart,
-  CalendarDays, MapPin, Save, Loader2,
+  CalendarDays, MapPin, Save, Loader2, BookDown,
 } from 'lucide-react'
 import { differenceInDays, format } from 'date-fns'
 import { useForm } from 'react-hook-form'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import api from '@/utils/api'
 import { useAuth } from '@/context/AuthContext'
@@ -173,6 +173,42 @@ export default function MissionControlPage() {
   )
 
   const isSaving = saveMutation.isLoading || createMutation.isLoading
+  const [generating, setGenerating] = useState(false)
+
+  async function downloadJourneyBook() {
+    if (!weddingId) return
+    setGenerating(true)
+    try {
+      const [budgetData, vendorsData, guestsData, tasksData, rundownData, hantaranData, menuData] = await Promise.all([
+        api.get(`/weddings/${weddingId}/budget`).then(r => r.data),
+        api.get(`/weddings/${weddingId}/vendors`).then(r => r.data),
+        api.get(`/weddings/${weddingId}/guests`).then(r => r.data),
+        api.get(`/weddings/${weddingId}/tasks`).then(r => r.data),
+        api.get(`/weddings/${weddingId}/rundown`).then(r => r.data),
+        api.get(`/weddings/${weddingId}/hantaran`).then(r => r.data),
+        api.get(`/weddings/${weddingId}/menu`).then(r => r.data),
+      ])
+      const { default: JourneyBook } = await import('@/components/pdf/JourneyBook')
+      const { pdf } = await import('@react-pdf/renderer')
+      const blob = await pdf(
+        JourneyBook({ wedding, stats, currency, budget: budgetData, vendors: vendorsData, guests: guestsData, tasks: tasksData, rundown: rundownData, hantaran: hantaranData, menu: menuData })
+      ).toBlob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `PlanLuhh-${wedding.groom_name}-${wedding.bride_name}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      toast.success('Journey Book berjaya dimuat turun! 📖')
+    } catch (err) {
+      console.error(err)
+      toast.error('Gagal jana PDF. Cuba semula.')
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   const onSave = (data) => {
     const payload = {}
@@ -227,7 +263,22 @@ export default function MissionControlPage() {
             </p>
           )}
         </div>
-        <Heart className="text-blush-400" size={28} />
+        <div className="flex items-center gap-3">
+          {wedding && (
+            <button
+              onClick={downloadJourneyBook}
+              disabled={generating}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 text-primary-700 text-sm font-medium hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {generating
+                ? <Loader2 size={15} className="animate-spin" />
+                : <BookDown size={15} />
+              }
+              {generating ? 'Menjana PDF...' : 'Journey Book'}
+            </button>
+          )}
+          <Heart className="text-blush-400" size={28} />
+        </div>
       </div>
 
       {/* 4 Stat Cards */}

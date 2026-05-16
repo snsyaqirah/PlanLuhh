@@ -8,7 +8,7 @@
 
 | Layer | Tech |
 |---|---|
-| Frontend | React 18, Vite, React Router v6, React Query v3, Framer Motion, Tailwind CSS, Lucide React |
+| Frontend | React 18, Vite, React Router v6, React Query v3, Framer Motion, Tailwind CSS, Lucide React, `@react-pdf/renderer` v4.5.1 |
 | Backend | FastAPI (Python), SQLAlchemy ORM, Alembic |
 | Database | PostgreSQL |
 | Infra | Docker Compose (3 containers: db, backend, frontend) |
@@ -73,33 +73,33 @@ Dashboard
 | Menu | ✅ Done |
 | Hantaran | ✅ Done |
 | E-Invitation Builder | ✅ Done |
+| E-Invitation Custom Design Upload | ✅ Done |
 | RSVP Dashboard | ✅ Done |
 | Seating | ✅ Done |
 | Gift Registry | ✅ Done |
 | Honeymoon | ✅ Done |
-
-> Note: All backend APIs are fully implemented. Only the frontend UI is pending for stub pages.
+| Journey Book PDF Export | ✅ Done |
 
 ---
 
-## Data Model Gaps (Needs DB Migration)
+## Data Model Notes
 
-The `Wedding` model currently has one `wedding_date` and `venue_name`. For Malaysia weddings (separate akad + sanding events, possibly different days per side), we need to add:
+All Wedding event fields (nikah + sanding dates/times/venues/colors) have been added via migration `b2c3d4e5f6a7`. The `Wedding` model now includes:
 
 ```
-tarikh_nikah          Date
-waktu_nikah           Time
-tarikh_sanding_perempuan  Date
-waktu_sanding_perempuan   Time
-tarikh_sanding_lelaki     Date  (if different from perempuan)
-waktu_sanding_lelaki      Time
-venue_nikah           String
-venue_sanding_perempuan   String
-venue_sanding_lelaki      String
-tema_warna_nikah      String  (hex or color name)
-tema_warna_sanding    String
-jumlah_tetamu_expected    Integer
+tarikh_nikah, waktu_nikah, venue_nikah, tema_warna_nikah
+tarikh_sanding_perempuan, waktu_sanding_perempuan, venue_sanding_perempuan
+tarikh_sanding_lelaki, waktu_sanding_lelaki, venue_sanding_lelaki, tema_warna_sanding
 ```
+
+### Alembic Migration History
+
+| Revision | Description |
+|---|---|
+| `b2c3d4e5f6a7` | Add nikah/sanding event fields to Wedding |
+| `b8c9d0e1f2a3` | Gift registry |
+| `c9d0e1f2a3b4` | Add card_builder_config |
+| `d5e6f7a8b9c0` | Add custom design pages (`use_custom_design` + `invitation_custom_pages` table) |
 
 ---
 
@@ -137,6 +137,8 @@ jumlah_tetamu_expected    Integer
 - Checklist: tasks completed / total (%)
 - Vendor Categories: confirmed categories / total (%)
 
+**Journey Book PDF** ✅ — Download button in the header. Generates a full PDF of everything filled across all modules (cover page, overview, checklist, budget, vendors, guests, rundown, hantaran, menu). Generated client-side with `@react-pdf/renderer`, triggers browser download. Filename: `PlanLuhh-{groom}-{bride}.pdf`.
+
 **Wedding Settings Form:**
 
 *Pengantin*
@@ -152,6 +154,8 @@ jumlah_tetamu_expected    Integer
 - **Sanding Pihak Perempuan**: Tarikh, Waktu, Venue
 - **Sanding Pihak Lelaki**: Tarikh, Waktu, Venue, Tema/Warna
 - **Main row**: Tarikh Utama (countdown), Venue Utama, Budget Ceiling (RM)
+
+> **Note:** First-time users (no wedding yet) see "Create Wedding" button which POSTs. Returning users see "Save Settings" which PATCHes. Wedding Settings is on the dashboard itself — there is no separate `/dashboard/settings` route (redirects back to `/dashboard`).
 
 ---
 
@@ -462,6 +466,16 @@ Select up to 3 vendors from the same category → side-by-side card comparison (
 **Language toggle:** Malay / English / Dual
 
 **Access:** Only Owner can publish/unpublish.
+
+#### Custom Design Upload ✅ (migration `d5e6f7a8b9c0`)
+
+Users can upload their own invitation design instead of picking a preset template.
+
+- **Format**: 1080×1920px (9:16 portrait). Client-side aspect ratio validation before upload — ratio must be between 0.505–0.620.
+- **Pages**: Up to 20 pages per invitation.
+- **Mode toggle** in builder: "Pilih Preset" (pick from templates) vs "Upload Sendiri" (upload your own pages).
+- **Stored** server-side at `/uploads/custom-design/{wedding_id}/`.
+- **Public page behaviour**: When `use_custom_design = true` and pages exist, the public invitation shows a full-screen slide viewer (`CustomPagesViewer`) instead of the standard layout. Tap left half to go back, tap right half to go forward. Dot indicators + chevron buttons.
 
 ---
 

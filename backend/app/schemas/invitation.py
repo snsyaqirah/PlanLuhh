@@ -24,8 +24,35 @@ class InvitationCreate(BaseModel):
     custom_message: Optional[str] = None
 
 
-class InvitationUpdate(InvitationCreate):
-    pass
+class InvitationUpdate(BaseModel):
+    theme: Optional[InvitationThemeEnum] = None
+    language: Optional[LanguageEnum] = None
+    show_love_story: Optional[bool] = None
+    show_meal_preference: Optional[bool] = None
+    show_gift_registry: Optional[bool] = None
+    show_dress_code: Optional[bool] = None
+    enable_rsvp: Optional[bool] = None
+    rsvp_max_pax: Optional[int] = None
+    enable_countdown: Optional[bool] = None
+    enable_music: Optional[bool] = None
+    music_url: Optional[str] = None
+    dress_code_description: Optional[str] = None
+    dress_code_colors: Optional[str] = None
+    gift_registry_url: Optional[str] = None
+    duitnow_qr_url: Optional[str] = None
+    custom_message: Optional[str] = None
+    design_id: Optional[int] = None
+    envelope_config: Optional[str] = None
+    card_config: Optional[str] = None
+    use_custom_design: Optional[bool] = None
+
+
+class InvitationCustomPageOut(BaseModel):
+    id: UUID
+    image_url: str
+    sort_order: int
+
+    model_config = {"from_attributes": True}
 
 
 class InvitationOut(BaseModel):
@@ -49,6 +76,11 @@ class InvitationOut(BaseModel):
     gift_registry_url: Optional[str]
     duitnow_qr_url: Optional[str]
     custom_message: Optional[str]
+    design_id: Optional[int]
+    envelope_config: Optional[str]
+    card_config: Optional[str]
+    use_custom_design: bool
+    custom_pages: List[InvitationCustomPageOut] = []
     created_at: datetime
 
     model_config = {"from_attributes": True}

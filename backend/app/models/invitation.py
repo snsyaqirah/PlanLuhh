@@ -49,6 +49,14 @@ class Invitation(Base, UUIDMixin, TimestampMixin):
     duitnow_qr_url = Column(String(500), nullable=True)
     custom_message = Column(Text, nullable=True)
 
+    # Card builder config
+    design_id = Column(Integer, nullable=True)           # 1-10 for floral designs
+    envelope_config = Column(Text, nullable=True)        # JSON string
+    card_config = Column(Text, nullable=True)            # JSON string of text blocks
+
+    # Custom design upload
+    use_custom_design = Column(Boolean, default=False, nullable=False)
+
     # Relationships
     wedding = relationship("Wedding", back_populates="invitation")
     love_story = relationship("LoveStory", back_populates="invitation", cascade="all, delete-orphan", order_by="LoveStory.sort_order")
@@ -56,6 +64,7 @@ class Invitation(Base, UUIDMixin, TimestampMixin):
     guestbook_entries = relationship("GuestbookEntry", back_populates="invitation", cascade="all, delete-orphan")
     rsvp_responses = relationship("RSVPResponse", back_populates="invitation", cascade="all, delete-orphan")
     gallery_photos = relationship("GalleryPhoto", back_populates="invitation", cascade="all, delete-orphan")
+    custom_pages = relationship("InvitationCustomPage", back_populates="invitation", cascade="all, delete-orphan", order_by="InvitationCustomPage.sort_order")
 
 
 class LoveStory(Base, UUIDMixin, TimestampMixin):
@@ -118,3 +127,13 @@ class GalleryPhoto(Base, UUIDMixin, TimestampMixin):
     sort_order = Column(Integer, default=0, nullable=False)
 
     invitation = relationship("Invitation", back_populates="gallery_photos")
+
+
+class InvitationCustomPage(Base, UUIDMixin, TimestampMixin):
+    __tablename__ = "invitation_custom_pages"
+
+    invitation_id = Column(UUID(as_uuid=True), ForeignKey("invitations.id", ondelete="CASCADE"), nullable=False, index=True)
+    image_url = Column(String(500), nullable=False)
+    sort_order = Column(Integer, default=0, nullable=False)
+
+    invitation = relationship("Invitation", back_populates="custom_pages")

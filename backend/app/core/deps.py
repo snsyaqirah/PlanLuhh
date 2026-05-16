@@ -35,6 +35,22 @@ def get_current_user(
     return user
 
 
+def get_optional_user(
+    access_token: Optional[str] = Cookie(None),
+    db: Session = Depends(get_db),
+) -> Optional[User]:
+    if not access_token:
+        return None
+    try:
+        payload = jwt.decode(access_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id = payload.get("sub")
+        if not user_id or payload.get("type") != "access":
+            return None
+        return db.query(User).filter(User.id == user_id, User.status == 1).first()
+    except Exception:
+        return None
+
+
 def get_verified_user(current_user: User = Depends(get_current_user)) -> User:
     if not current_user.is_verified or current_user.account_status != UserStatusEnum.VERIFIED:
         raise HTTPException(
